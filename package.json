@@ -1,0 +1,10 @@
+{
+  "name": "chronos-focus",
+  "version": "1.0.0",
+  "description": "Lightweight zero-dependency Pomodoro & focus cadence timer",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx --yes http-server . -p 4173"
+  },
+  "license": "MIT"
+}

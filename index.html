@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>静流番茄 · 专注节拍器</title>
+  <style>
+    :root {
+      --bg: #f6f5f0;
+      --surface: #ffffff;
+      --border: #e4e1d8;
+      --ink: #1e2420;
+      --muted: #667068;
+      --accent: #1d6b52;
+      --accent-soft: #e6f1ec;
+      --warn: #b45309;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Microsoft YaHei", "PingFang SC", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .shell {
+      width: 100%;
+      max-width: 780px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 28px 32px;
+      box-shadow: 0 12px 32px rgba(20, 32, 24, 0.06);
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 28px;
+    }
+    @media (max-width: 680px) { .shell { grid-template-columns: 1fr; } }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 6px; }
+    .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+    .modes { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .mode-btn {
+      border: 1px solid var(--border);
+      background: #faf9f5;
+      color: var(--ink);
+      padding: 7px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .mode-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .clock-box {
+      background: #faf9f5;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px 20px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .time {
+      font-size: 56px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      line-height: 1.1;
+    }
+    .status { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    .controls { display: flex; gap: 10px; }
+    .btn-primary {
+      flex: 1;
+      padding: 11px 18px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      padding: 11px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .side {
+      border-left: 1px solid var(--border);
+      padding-left: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    @media (max-width: 680px) {
+      .side { border-left: none; border-top: 1px solid var(--border); padding-left: 0; padding-top: 20px; }
+    }
+    .stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: #faf9f5;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+    }
+    .stat-label { font-size: 12px; color: var(--muted); }
+    .stat-val { font-size: 20px; font-weight: 700; margin-top: 4px; color: var(--accent); }
+    .task-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      background: #faf9f5;
+    }
+    .log-title { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
+    .log-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 180px; overflow-y: auto; }
+    .log-item {
+      font-size: 12px;
+      color: var(--muted);
+      background: #faf9f5;
+      border-radius: 8px;
+      padding: 7px 10px;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section>
+      <span class="badge">静流计时 · 零依赖离线单页</span>
+      <h1>静流番茄专注节拍器</h1>
+      <p class="sub">温润纸墨桌面专注计时器，支持三段节拍、任务标签与本地记录</p>
+      <div class="modes">
+        <button class="mode-btn active" data-min="25" data-label="深度专注">深度专注 25m</button>
+        <button class="mode-btn" data-min="5" data-label="短休恢复">短休 5m</button>
+        <button class="mode-btn" data-min="15" data-label="长休整理">长休 15m</button>
+      </div>
+      <div class="clock-box">
+        <div class="time" id="clock">25:00</div>
+        <div class="status" id="statusText">当前节拍：深度专注 · 准备就绪</div>
+      </div>
+      <div class="controls">
+        <button class="btn-primary" id="toggleBtn">开始专注</button>
+        <button class="btn-secondary" id="resetBtn">重置</button>
+        <button class="btn-secondary" id="completeBtn">记为完成</button>
+      </div>
+    </section>
+    <aside class="side">
+      <div>
+        <div class="stat-row">
+          <div class="stat-card">
+            <div class="stat-label">今日完成轮次</div>
+            <div class="stat-val" id="doneCount">3</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">累计专注分钟</div>
+            <div class="stat-val" id="doneMins">75</div>
+          </div>
+        </div>
+        <input class="task-input" id="taskInput" type="text" value="整理实验数据与本周论文提纲" placeholder="输入当前专注任务..." />
+        <div class="log-title">最近专注记录</div>
+        <ul class="log-list" id="logList">
+          <li class="log-item"><span>实验预处理脚本核对</span><span>25m · 已完成</span></li>
+          <li class="log-item"><span>文献精读批注</span><span>25m · 已完成</span></li>
+          <li class="log-item"><span>实验参数复盘</span><span>25m · 已完成</span></li>
+        </ul>
+      </div>
+      <div style="font-size:11px;color:#889289;margin-top:12px;">纯前端本地存储 · 数据留存浏览器不上传</div>
+    </aside>
+  </main>
+  <script>
+    let modeMin = 25;
+    let modeLabel = "深度专注";
+    let remainSec = 25 * 60;
+    let timerId = null;
+    const STORAGE_KEY = "chronos_focus_stats_v1";
+
+    const clockEl = document.getElementById("clock");
+    const statusEl = document.getElementById("statusText");
+    const toggleBtn = document.getElementById("toggleBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const completeBtn = document.getElementById("completeBtn");
+    const taskInput = document.getElementById("taskInput");
+    const doneCountEl = document.getElementById("doneCount");
+    const doneMinsEl = document.getElementById("doneMins");
+    const logListEl = document.getElementById("logList");
+
+    function formatClock(sec) {
+      const m = String(Math.floor(sec / 60)).padStart(2, "0");
+      const s = String(sec % 60).padStart(2, "0");
+      return m + ":" + s;
+    }
+
+    function loadStats() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      return {
+        count: 3,
+        mins: 75,
+        logs: [
+          { task: "实验预处理脚本核对", mins: 25 },
+          { task: "文献精读批注", mins: 25 },
+          { task: "实验参数复盘", mins: 25 }
+        ]
+      };
+    }
+
+    function renderStats(st) {
+      doneCountEl.textContent = String(st.count);
+      doneMinsEl.textContent = String(st.mins);
+      logListEl.innerHTML = "";
+      for (const item of st.logs.slice(0, 6)) {
+        const li = document.createElement("li");
+        li.className = "log-item";
+        const s1 = document.createElement("span");
+        s1.textContent = item.task;
+        const s2 = document.createElement("span");
+        s2.textContent = item.mins + "m · 已完成";
+        li.appendChild(s1);
+        li.appendChild(s2);
+        logListEl.appendChild(li);
+      }
+    }
+
+    let stats = loadStats();
+    renderStats(stats);
+
+    function recordDone() {
+      const task = (taskInput.value || "").trim() || "日常专注任务";
+      stats.count += 1;
+      stats.mins += modeMin;
+      stats.logs.unshift({ task, mins: modeMin });
+      stats.logs = stats.logs.slice(0, 12);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stats)); } catch {}
+      renderStats(stats);
+    }
+
+    function stopTimer() {
+      if (timerId !== null) {
+        clearInterval(timerId);
+        timerId = null;
+      }
+      toggleBtn.textContent = "开始专注";
+    }
+
+    document.querySelectorAll(".mode-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        stopTimer();
+        document.querySelectorAll(".mode-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        modeMin = Number(btn.dataset.min || 25);
+        modeLabel = btn.dataset.label || "深度专注";
+        remainSec = modeMin * 60;
+        clockEl.textContent = formatClock(remainSec);
+        statusEl.textContent = "当前节拍：" + modeLabel + " · 准备就绪";
+      });
+    });
+
+    toggleBtn.addEventListener("click", () => {
+      if (timerId !== null) {
+        stopTimer();
+        statusEl.textContent = "当前节拍：" + modeLabel + " · 已暂停";
+        return;
+      }
+      toggleBtn.textContent = "暂停";
+      statusEl.textContent = "当前节拍：" + modeLabel + " · 计时中";
+      timerId = setInterval(() => {
+        remainSec -= 1;
+        if (remainSec <= 0) {
+          stopTimer();
+          remainSec = modeMin * 60;
+          clockEl.textContent = formatClock(remainSec);
+          statusEl.textContent = "当前节拍：" + modeLabel + " · 本轮已完成";
+          recordDone();
+          return;
+        }
+        clockEl.textContent = formatClock(remainSec);
+      }, 1000);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      stopTimer();
+      remainSec = modeMin * 60;
+      clockEl.textContent = formatClock(remainSec);
+      statusEl.textContent = "当前节拍：" + modeLabel + " · 已重置";
+    });
+
+    completeBtn.addEventListener("click", () => {
+      stopTimer();
+      remainSec = modeMin * 60;
+      clockEl.textContent = formatClock(remainSec);
+      recordDone();
+      statusEl.textContent = "当前节拍：" + modeLabel + " · 已记入完成";
+    });
+  </script>
+</body>
+</html>
